@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartService - Prototipo Rustico</title>
+    <style>
+      body { font-family: sans-serif; margin: 16px; background: #f5f5f5; color: #111; }
+      h1, h2 { margin: 8px 0; }
+      .box { background: #fff; border: 1px solid #ccc; padding: 12px; margin: 12px 0; }
+      label { display: block; margin-top: 8px; }
+      input, textarea, select, button { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+      button { width: auto; cursor: pointer; margin-right: 8px; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; }
+      .hidden { display: none; }
+      .ok { color: #0a6b2c; font-weight: bold; }
+      .warn { color: #9a4f00; font-weight: bold; }
+      small { color: #555; }
+    </style>
+  </head>
+  <body>
+    <h1>SmartService - Prototipo Rustico</h1>
+    <small>Objetivo: simular el flujo de crear reclamo para documentacion academica.</small>
+
+    <section class="box" id="vista-inicio">
+      <h2>Vista Inicio</h2>
+      <p>Canal: Web</p>
+      <button id="btn-ir-crear">Crear reclamo</button>
+      <button id="btn-ir-estado">Consultar estado</button>
+    </section>
+
+    <section class="box hidden" id="vista-crear">
+      <h2>Vista Crear Reclamo</h2>
+      <label>Correo
+        <input id="correo" type="email" placeholder="ciudadano@mail.com" />
+      </label>
+      <label>DNI
+        <input id="dni" type="text" placeholder="12345678" />
+      </label>
+      <label>Problema
+        <textarea id="problema" rows="3" placeholder="Describe el reclamo"></textarea>
+      </label>
+      <label>Direccion
+        <input id="direccion" type="text" placeholder="Calle 123, Funes" />
+      </label>
+      <label>Evidencia (opcional)
+        <input id="evidencia" type="file" />
+      </label>
+      <div class="row">
+        <button id="btn-validar">Enviar y validar</button>
+        <button id="btn-volver-1">Volver</button>
+      </div>
+      <p id="msg-crear"></p>
+    </section>
+
+    <section class="box hidden" id="vista-reintento">
+      <h2>Vista Reintento Direccion</h2>
+      <p class="warn">Direccion fuera de area de servicio. Ingrese una nueva direccion en Funes o Santa Fe.</p>
+      <label>Nueva direccion
+        <input id="direccion-reintento" type="text" placeholder="Nueva direccion" />
+      </label>
+      <div class="row">
+        <button id="btn-reintentar">Reintentar validacion</button>
+        <button id="btn-volver-2">Volver</button>
+      </div>
+      <p id="msg-reintento"></p>
+    </section>
+
+    <section class="box hidden" id="vista-confirmacion">
+      <h2>Vista Confirmacion</h2>
+      <p class="ok">Tu reclamo fue creado correctamente.</p>
+      <p id="reclamo-id">ID: --</p>
+      <button id="btn-inicio">Ir a inicio</button>
+    </section>
+
+    <section class="box hidden" id="vista-estado">
+      <h2>Vista Consultar Estado</h2>
+      <label>ID de reclamo
+        <input id="id-consulta" type="text" placeholder="UUID" />
+      </label>
+      <button id="btn-consultar">Consultar</button>
+      <p id="msg-estado"></p>
+      <button id="btn-volver-3">Volver</button>
+    </section>
+
+    <script>
+      const ids = [
+        'vista-inicio',
+        'vista-crear',
+        'vista-reintento',
+        'vista-confirmacion',
+        'vista-estado',
+      ];
+
+      function show(id) {
+        ids.forEach((x) => document.getElementById(x).classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+      }
+
+      function fakeId() {
+        return 'RCL-' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+      }
+
+      document.getElementById('btn-ir-crear').onclick = () => show('vista-crear');
+      document.getElementById('btn-ir-estado').onclick = () => show('vista-estado');
+      document.getElementById('btn-volver-1').onclick = () => show('vista-inicio');
+      document.getElementById('btn-volver-2').onclick = () => show('vista-crear');
+      document.getElementById('btn-volver-3').onclick = () => show('vista-inicio');
+      document.getElementById('btn-inicio').onclick = () => show('vista-inicio');
+
+      document.getElementById('btn-validar').onclick = () => {
+        const correo = document.getElementById('correo').value.trim();
+        const dni = document.getElementById('dni').value.trim();
+        const problema = document.getElementById('problema').value.trim();
+        const direccion = document.getElementById('direccion').value.trim().toLowerCase();
+        const msg = document.getElementById('msg-crear');
+
+        if (!correo || !dni || !problema || !direccion) {
+          msg.textContent = 'Faltan datos obligatorios.';
+          msg.className = 'warn';
+          return;
+        }
+
+        if (!(direccion.includes('funes') || direccion.includes('santa fe'))) {
+          msg.textContent = 'Direccion fuera de area. Ir a reintento.';
+          msg.className = 'warn';
+          show('vista-reintento');
+          return;
+        }
+
+        document.getElementById('reclamo-id').textContent = 'ID: ' + fakeId();
+        msg.textContent = '';
+        show('vista-confirmacion');
+      };
+
+      document.getElementById('btn-reintentar').onclick = () => {
+        const dir = document.getElementById('direccion-reintento').value.trim().toLowerCase();
+        const msg = document.getElementById('msg-reintento');
+
+        if (dir.includes('funes') || dir.includes('santa fe')) {
+          document.getElementById('reclamo-id').textContent = 'ID: ' + fakeId();
+          msg.textContent = '';
+          show('vista-confirmacion');
+        } else {
+          msg.textContent = 'Sigue fuera de area. Probar con otra direccion.';
+          msg.className = 'warn';
+        }
+      };
+
+      document.getElementById('btn-consultar').onclick = () => {
+        const id = document.getElementById('id-consulta').value.trim();
+        const msg = document.getElementById('msg-estado');
+
+        if (!id) {
+          msg.textContent = 'Ingrese un ID de reclamo.';
+          msg.className = 'warn';
+          return;
+        }
+
+        msg.textContent = 'Estado simulado: pendiente de revision.';
+        msg.className = 'ok';
+      };
+    </script>
+  </body>
+</html>
