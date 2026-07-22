@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartService - Prototipo Rustico CR-02</title>
+    <style>
+      :root {
+        --bg: #eef3f8;
+        --card: #ffffff;
+        --line: #c9d5e5;
+        --ink: #1b2533;
+        --soft: #5c6a7d;
+        --primary: #1f6feb;
+        --ok: #1c7c42;
+        --warn: #b35a00;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Trebuchet MS", Verdana, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 { margin: 0 0 4px 0; }
+      .subtitle { color: var(--soft); margin-bottom: 18px; }
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+      .hidden { display: none; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; }
+      label { display: block; font-size: 14px; margin: 8px 0 4px; }
+      input, select, textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #b9c6d8;
+        border-radius: 7px;
+      }
+      button {
+        border: 1px solid #1a57b7;
+        background: var(--primary);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button.ghost {
+        background: #fff;
+        color: var(--ink);
+        border-color: #a9bbd2;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      th, td {
+        border: 1px solid #d5dfec;
+        padding: 8px;
+        text-align: left;
+        font-size: 14px;
+      }
+      .ok { color: var(--ok); font-weight: bold; }
+      .warn { color: var(--warn); font-weight: bold; }
+      .step {
+        display: inline-block;
+        font-size: 12px;
+        background: #dde8f8;
+        color: #203654;
+        border-radius: 999px;
+        padding: 3px 10px;
+        margin-bottom: 8px;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 12px;
+        border: 1px solid #b8c9df;
+        border-radius: 999px;
+        padding: 2px 8px;
+        margin-right: 4px;
+      }
+      @media (max-width: 720px) {
+        main { padding: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Prototipo Rustico CR-02 - Rutas</h1>
+      <p class="subtitle">Vistas frontera para robustez: seleccion, generacion, consulta, intervencion, evidencia.</p>
+
+      <section id="VistaSeleccionReclamos" class="panel">
+        <div class="step">Boundary: VistaSeleccionReclamos</div>
+        <h2>Seleccion de reclamos</h2>
+        <div class="row">
+          <div style="flex:1; min-width:220px;">
+            <label>Area municipal</label>
+            <select id="area">
+              <option value="norte">Area Norte</option>
+              <option value="sur">Area Sur</option>
+            </select>
+          </div>
+          <div style="flex:1; min-width:220px;">
+            <label>Categoria</label>
+            <select id="categoriaFiltro">
+              <option value="">Todas</option>
+              <option value="alumbrado">alumbrado</option>
+              <option value="baches_y_pavimento">baches_y_pavimento</option>
+              <option value="residuos">residuos</option>
+            </select>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Sel.</th><th>Reclamo</th><th>Categoria</th><th>Prioridad</th><th>Zona</th>
+            </tr>
+          </thead>
+          <tbody id="claimsBody"></tbody>
+        </table>
+
+        <div class="row" style="margin-top:10px;">
+          <button id="btnSeleccionar">seleccionar reclamos</button>
+          <button class="ghost" id="btnIrGeneracion">ir a generar ruta</button>
+        </div>
+        <p id="msgSeleccion"></p>
+      </section>
+
+      <section id="VistaGeneracionRuta" class="panel hidden">
+        <div class="step">Boundary: VistaGeneracionRuta</div>
+        <h2>Generacion y asignacion</h2>
+        <p id="resumenSeleccion"></p>
+
+        <div class="row">
+          <div style="flex:1; min-width:220px;">
+            <label>Criterio de optimizacion</label>
+            <select id="criterio">
+              <option value="cercania">cercania</option>
+              <option value="prioridad">prioridad</option>
+              <option value="menor_distancia">menor_distancia</option>
+              <option value="menor_tiempo">menor_tiempo</option>
+              <option value="mixto">mixto</option>
+            </select>
+          </div>
+          <div style="flex:1; min-width:220px;">
+            <label>Recurso operativo</label>
+            <select id="recurso">
+              <option value="agente:AG-12">Agente AG-12</option>
+              <option value="cuadrilla:CU-03">Cuadrilla CU-03</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button id="btnGenerar">generar ruta optimizada</button>
+          <button id="btnAsignar">asignar ruta</button>
+          <button class="ghost" id="btnIrRuta">ir a ruta asignada</button>
+        </div>
+        <p id="msgGeneracion"></p>
+      </section>
+
+      <section id="VistaRutaAsignada" class="panel hidden">
+        <div class="step">Boundary: VistaRutaAsignada</div>
+        <h2>Ruta asignada</h2>
+        <p>
+          <span class="tag" id="tagRuta">Ruta: --</span>
+          <span class="tag" id="tagRecurso">Recurso: --</span>
+          <span class="tag" id="tagEstado">Estado: asignada</span>
+        </p>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Reclamo</th><th>Direccion</th><th>Estado punto</th></tr>
+          </thead>
+          <tbody id="stopsBody"></tbody>
+        </table>
+        <div class="row" style="margin-top:10px;">
+          <button id="btnConsultar">consultar ruta asignada</button>
+          <button id="btnIrIntervencion">actualizar reclamo desde recorrido</button>
+        </div>
+        <p id="msgRuta"></p>
+      </section>
+
+      <section id="VistaActualizacionIntervencion" class="panel hidden">
+        <div class="step">Boundary: VistaActualizacionIntervencion</div>
+        <h2>Registrar intervencion operativa</h2>
+        <label>Punto de ruta</label>
+        <select id="stopSelect"></select>
+
+        <label>Resultado</label>
+        <select id="resultado">
+          <option value="resuelto">resuelto</option>
+          <option value="no_resuelto">no_resuelto</option>
+          <option value="requiere_nueva_visita">requiere_nueva_visita</option>
+          <option value="no_corresponde">no_corresponde</option>
+        </select>
+
+        <label>Observacion</label>
+        <textarea id="obs" rows="3" placeholder="Detalle de la intervencion"></textarea>
+
+        <div class="row" style="margin-top:10px;">
+          <button id="btnActualizar">actualizar reclamo desde recorrido</button>
+          <button id="btnRegistrarIntervencion">registrar intervencion operativa</button>
+          <button id="btnRegistrarHistorial">registrar historial de accion</button>
+          <button class="ghost" id="btnIrEvidencia">ir a evidencia</button>
+        </div>
+        <p id="msgIntervencion"></p>
+      </section>
+
+      <section id="VistaEvidenciaResolucion" class="panel hidden">
+        <div class="step">Boundary: VistaEvidenciaResolucion</div>
+        <h2>Adjuntar evidencia de resolucion</h2>
+
+        <label>Tipo de evidencia</label>
+        <select id="tipoEvidencia">
+          <option value="imagen">imagen</option>
+          <option value="video">video</option>
+          <option value="documento">documento</option>
+        </select>
+
+        <label>Nombre de archivo</label>
+        <input id="nombreArchivo" type="text" placeholder="foto_frente.jpg" />
+
+        <label>URL o referencia</label>
+        <input id="urlArchivo" type="text" placeholder="https://..." />
+
+        <div class="row" style="margin-top:10px;">
+          <button id="btnAdjuntar">adjuntar evidencia de resolucion</button>
+          <button class="ghost" id="btnVolverRuta">volver a ruta asignada</button>
+        </div>
+        <p id="msgEvidencia"></p>
+      </section>
+    </main>
+
+    <script>
+      const views = [
+        'VistaSeleccionReclamos',
+        'VistaGeneracionRuta',
+        'VistaRutaAsignada',
+        'VistaActualizacionIntervencion',
+        'VistaEvidenciaResolucion',
+      ];
+
+      const claims = [
+        { id: 'REC-1201', categoria: 'alumbrado', prioridad: 'alta', zona: 'Z1', direccion: 'Belgrano 240' },
+        { id: 'REC-1202', categoria: 'baches_y_pavimento', prioridad: 'media', zona: 'Z1', direccion: 'San Martin 510' },
+        { id: 'REC-1203', categoria: 'residuos', prioridad: 'baja', zona: 'Z2', direccion: 'Rivadavia 98' },
+      ];
+
+      const state = {
+        selected: [],
+        routeId: '',
+        recurso: '',
+        stops: [],
+      };
+
+      function show(viewId) {
+        views.forEach((v) => document.getElementById(v).classList.add('hidden'));
+        document.getElementById(viewId).classList.remove('hidden');
+      }
+
+      function renderClaims() {
+        const body = document.getElementById('claimsBody');
+        const filtro = document.getElementById('categoriaFiltro').value;
+        const rows = claims
+          .filter((c) => !filtro || c.categoria === filtro)
+          .map((c) => {
+            return `<tr>
+              <td><input type="checkbox" class="claim-check" value="${c.id}" /></td>
+              <td>${c.id}</td>
+              <td>${c.categoria}</td>
+              <td>${c.prioridad}</td>
+              <td>${c.zona}</td>
+            </tr>`;
+          })
+          .join('');
+        body.innerHTML = rows;
+      }
+
+      function nextRouteId() {
+        return 'RUTA-' + Math.floor(Math.random() * 9000 + 1000);
+      }
+
+      function selectedClaims() {
+        const checks = [...document.querySelectorAll('.claim-check:checked')];
+        return checks.map((x) => x.value);
+      }
+
+      function hydrateStops() {
+        state.stops = state.selected.map((id, idx) => {
+          const c = claims.find((x) => x.id === id);
+          return {
+            orden: idx + 1,
+            reclamoId: c.id,
+            direccion: c.direccion,
+            estado: 'pendiente',
+          };
+        });
+      }
+
+      function renderRoute() {
+        const body = document.getElementById('stopsBody');
+        body.innerHTML = state.stops.map((s) => `<tr>
+          <td>${s.orden}</td><td>${s.reclamoId}</td><td>${s.direccion}</td><td>${s.estado}</td>
+        </tr>`).join('');
+
+        const select = document.getElementById('stopSelect');
+        select.innerHTML = state.stops.map((s) => `<option value="${s.reclamoId}">${s.orden} - ${s.reclamoId}</option>`).join('');
+
+        document.getElementById('tagRuta').textContent = `Ruta: ${state.routeId || '--'}`;
+        document.getElementById('tagRecurso').textContent = `Recurso: ${state.recurso || '--'}`;
+      }
+
+      document.getElementById('categoriaFiltro').addEventListener('change', renderClaims);
+
+      document.getElementById('btnSeleccionar').onclick = () => {
+        state.selected = selectedClaims();
+        const msg = document.getElementById('msgSeleccion');
+        if (!state.selected.length) {
+          msg.textContent = 'Selecciona al menos un reclamo.';
+          msg.className = 'warn';
+          return;
+        }
+        msg.textContent = `Seleccion confirmada: ${state.selected.length} reclamo(s).`;
+        msg.className = 'ok';
+      };
+
+      document.getElementById('btnIrGeneracion').onclick = () => {
+        state.selected = selectedClaims();
+        const msg = document.getElementById('msgSeleccion');
+        if (!state.selected.length) {
+          msg.textContent = 'Debes seleccionar reclamos antes de continuar.';
+          msg.className = 'warn';
+          return;
+        }
+        document.getElementById('resumenSeleccion').textContent = `Reclamos seleccionados: ${state.selected.join(', ')}`;
+        show('VistaGeneracionRuta');
+      };
+
+      document.getElementById('btnGenerar').onclick = () => {
+        const criterio = document.getElementById('criterio').value;
+        state.routeId = nextRouteId();
+        hydrateStops();
+        const msg = document.getElementById('msgGeneracion');
+        msg.textContent = `Ruta ${state.routeId} generada con criterio ${criterio}.`;
+        msg.className = 'ok';
+      };
+
+      document.getElementById('btnAsignar').onclick = () => {
+        const rec = document.getElementById('recurso').value;
+        if (!state.routeId) {
+          const msg = document.getElementById('msgGeneracion');
+          msg.textContent = 'Primero debes generar la ruta optimizada.';
+          msg.className = 'warn';
+          return;
+        }
+        state.recurso = rec;
+        const msg = document.getElementById('msgGeneracion');
+        msg.textContent = `Ruta ${state.routeId} asignada a ${rec}.`;
+        msg.className = 'ok';
+      };
+
+      document.getElementById('btnIrRuta').onclick = () => {
+        if (!state.routeId || !state.recurso) {
+          const msg = document.getElementById('msgGeneracion');
+          msg.textContent = 'Debes generar y asignar la ruta antes de consultarla.';
+          msg.className = 'warn';
+          return;
+        }
+        renderRoute();
+        show('VistaRutaAsignada');
+      };
+
+      document.getElementById('btnConsultar').onclick = () => {
+        renderRoute();
+        const msg = document.getElementById('msgRuta');
+        msg.textContent = 'Ruta consultada correctamente.';
+        msg.className = 'ok';
+      };
+
+      document.getElementById('btnIrIntervencion').onclick = () => {
+        if (!state.stops.length) {
+          const msg = document.getElementById('msgRuta');
+          msg.textContent = 'No hay puntos para intervenir.';
+          msg.className = 'warn';
+          return;
+        }
+        show('VistaActualizacionIntervencion');
+      };
+
+      document.getElementById('btnActualizar').onclick = () => {
+        const reclamoId = document.getElementById('stopSelect').value;
+        const stop = state.stops.find((s) => s.reclamoId === reclamoId);
+        const resultado = document.getElementById('resultado').value;
+        if (!stop) return;
+
+        stop.estado = resultado === 'resuelto' ? 'visitado' : (resultado === 'requiere_nueva_visita' ? 'reprogramado' : 'omitido');
+
+        const msg = document.getElementById('msgIntervencion');
+        msg.textContent = `Reclamo ${reclamoId} actualizado desde recorrido.`;
+        msg.className = 'ok';
+      };
+
+      document.getElementById('btnRegistrarIntervencion').onclick = () => {
+        const msg = document.getElementById('msgIntervencion');
+        msg.textContent = 'Intervencion operativa registrada.';
+        msg.className = 'ok';
+      };
+
+      document.getElementById('btnRegistrarHistorial').onclick = () => {
+        const msg = document.getElementById('msgIntervencion');
+        msg.textContent = 'Historial de accion registrado.';
+        msg.className = 'ok';
+      };
+
+      document.getElementById('btnIrEvidencia').onclick = () => {
+        show('VistaEvidenciaResolucion');
+      };
+
+      document.getElementById('btnAdjuntar').onclick = () => {
+        const tipo = document.getElementById('tipoEvidencia').value;
+        const nombre = document.getElementById('nombreArchivo').value.trim();
+        const url = document.getElementById('urlArchivo').value.trim();
+        const msg = document.getElementById('msgEvidencia');
+
+        if (!nombre || !url) {
+          msg.textContent = 'Completa nombre y URL de evidencia.';
+          msg.className = 'warn';
+          return;
+        }
+
+        msg.textContent = `Evidencia ${tipo} adjuntada: ${nombre}.`;
+        msg.className = 'ok';
+      };
+
+      document.getElementById('btnVolverRuta').onclick = () => {
+        renderRoute();
+        show('VistaRutaAsignada');
+      };
+
+      renderClaims();
+    </script>
+  </body>
+</html>
