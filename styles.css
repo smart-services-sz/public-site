@@ -168,6 +168,52 @@ a {
   padding: 40px;
 }
 
+.tracking-card {
+  display: grid;
+  gap: 14px;
+  padding: 28px;
+}
+
+.tracking-form {
+  display: grid;
+  gap: 8px;
+}
+
+.tracking-form label {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.tracking-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tracking-form input {
+  flex: 1 1 240px;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 14px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tracking-message {
+  min-height: 1.4em;
+  color: var(--muted);
+}
+
+.tracking-result {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(17, 195, 174, 0.1);
+}
+
 .hero-copy::after,
 .hero-panel::after,
 .content-card::after,

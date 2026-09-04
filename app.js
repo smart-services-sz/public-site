@@ -4,6 +4,7 @@ const siteConfig = {
   legalEmail: 'legal@szsmartservice.com',
   contactPhone: '+54 9 11 0000 0000',
   updatedAt: '8 de mayo de 2026',
+  gatewayUrl: 'http://localhost:3000',
 };
 
 const textBindings = {
@@ -46,5 +47,39 @@ if (menuToggle instanceof HTMLButtonElement && siteNav instanceof HTMLElement) {
       siteNav.classList.remove('is-open');
       menuToggle.setAttribute('aria-expanded', 'false');
     });
+  });
+}
+
+const trackingForm = document.getElementById('tracking-form');
+const trackingCode = document.getElementById('tracking-code');
+const trackingMessage = document.getElementById('tracking-message');
+const trackingResult = document.getElementById('tracking-result');
+
+if (trackingForm instanceof HTMLFormElement && trackingCode instanceof HTMLInputElement && trackingMessage && trackingResult) {
+  trackingForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const code = trackingCode.value.trim().toUpperCase();
+    trackingMessage.textContent = 'Consultando estado...';
+    trackingResult.hidden = true;
+
+    try {
+      const response = await fetch(`${siteConfig.gatewayUrl}/api/reclamos/seguimiento/${encodeURIComponent(code)}`);
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.message || 'No se pudo consultar el reclamo.');
+      }
+
+      const data = body.data;
+      trackingResult.innerHTML = `
+        <strong>${data.trackingCode}</strong>
+        <span>Estado: ${data.status}</span>
+        <span>Categoria: ${data.category}</span>
+        <span>Ultima actualizacion: ${new Date(data.updatedAt).toLocaleString('es-AR')}</span>
+      `;
+      trackingResult.hidden = false;
+      trackingMessage.textContent = '';
+    } catch (error) {
+      trackingMessage.textContent = error instanceof Error ? error.message : 'No se pudo consultar el reclamo.';
+    }
   });
 }
