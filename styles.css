@@ -190,14 +190,21 @@ a {
   gap: 10px;
 }
 
-.tracking-form input {
+.tracking-form input,
+.tracking-form select,
+.tracking-form textarea {
   flex: 1 1 240px;
   min-height: 48px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 0 14px;
+  padding: 12px 14px;
   color: var(--text);
   background: rgba(255, 255, 255, 0.06);
+}
+
+.tracking-form textarea {
+  min-height: 112px;
+  resize: vertical;
 }
 
 .tracking-message {
