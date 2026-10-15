@@ -107,33 +107,24 @@
             <h2>Crear un reclamo</h2>
           </div>
           <div class="content-card tracking-card">
-            <p>Describe el problema, indica su ubicacion y deja un contacto para recibir el codigo de seguimiento.</p>
+            <p id="claim-municipality"></p>
             <form id="public-claim-form" class="tracking-form">
               <label for="claim-problem">Problema</label>
               <textarea id="claim-problem" name="problema" maxlength="1000" rows="4" required></textarea>
               <label for="claim-address">Direccion</label>
               <input id="claim-address" name="direccion" type="text" maxlength="500" autocomplete="street-address" required />
               <label for="claim-category">Categoria</label>
-              <select id="claim-category" name="categoria" required>
-                <option value="">Selecciona una categoria</option>
-                <option value="agua_y_cloacas">Agua y cloacas</option>
-                <option value="alumbrado">Alumbrado</option>
-                <option value="baches_y_pavimento">Baches y pavimento</option>
-                <option value="arbolado">Arbolado</option>
-                <option value="residuos">Residuos</option>
-                <option value="electricidad">Electricidad</option>
-                <option value="gas">Gas</option>
-                <option value="transporte">Transporte</option>
-                <option value="infraestructura">Infraestructura</option>
-                <option value="otros">Otros</option>
+              <select id="claim-category" name="categoria" required disabled>
+                <option value="">Cargando categorias...</option>
               </select>
               <label for="claim-contact">Telefono o correo</label>
               <input id="claim-contact" name="contacto" type="text" maxlength="254" autocomplete="email" required />
               <label for="claim-evidence">Evidencias (hasta 3 archivos, 5 MB cada uno)</label>
               <input id="claim-evidence" name="evidencias" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,application/pdf" multiple />
-              <button class="button button-primary" type="submit">Enviar reclamo</button>
+              <button class="button button-primary" type="submit" disabled>Enviar reclamo</button>
             </form>
             <p id="claim-message" class="tracking-message" role="status" aria-live="polite"></p>
+            <button id="claim-config-retry" class="button button-secondary" type="button" hidden>Reintentar</button>
             <div id="claim-result" class="tracking-result" hidden></div>
           </div>
         </section>

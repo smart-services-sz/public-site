@@ -2,7 +2,7 @@ const configuredGatewayUrl = document
   .querySelector('meta[name="smartservice-gateway-url"]')
   ?.getAttribute('content')
   ?.trim();
-const isLocalHost = ['localhost', '127.0.0.1'].includes(
+const isLocalHost = window.location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(
   window.location.hostname,
 );
 
@@ -46,10 +46,61 @@ for (const id of emailTargets) {
 const publicClaimForm = document.getElementById('public-claim-form');
 const claimMessage = document.getElementById('claim-message');
 const claimResult = document.getElementById('claim-result');
+const claimCategory = document.getElementById('claim-category');
+const claimMunicipality = document.getElementById('claim-municipality');
+const claimConfigRetry = document.getElementById('claim-config-retry');
 
-if (publicClaimForm instanceof HTMLFormElement && claimMessage && claimResult) {
+if (publicClaimForm instanceof HTMLFormElement && claimMessage && claimResult &&
+    claimCategory instanceof HTMLSelectElement && claimConfigRetry instanceof HTMLButtonElement) {
+  const submitButton = publicClaimForm.querySelector('button[type="submit"]');
+  let configurationReady = false;
+  let submitting = false;
+
+  async function loadClaimConfiguration() {
+    configurationReady = false;
+    claimCategory.disabled = true;
+    if (submitButton) submitButton.disabled = true;
+    claimConfigRetry.hidden = true;
+    claimMessage.textContent = 'Cargando configuracion municipal...';
+    try {
+      const response = await fetch(`${siteConfig.gatewayUrl}/api/reclamos/public-config`, {
+        signal: AbortSignal.timeout(10000),
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('El canal municipal no esta disponible.');
+      const configuration = await response.json();
+      if (!configuration.municipality || typeof configuration.municipality.name !== 'string' ||
+          !Array.isArray(configuration.categories)) {
+        throw new Error('No pudimos cargar la configuracion municipal.');
+      }
+      const categories = configuration.categories.filter((category) =>
+        category && typeof category.code === 'string' && category.code &&
+        typeof category.name === 'string' && category.name,
+      );
+      if (!categories.length) throw new Error('No hay categorias habilitadas para este municipio.');
+      claimCategory.replaceChildren(
+        new Option('Selecciona una categoria', '', true, true),
+        ...categories.map((category) => new Option(category.name, category.code)),
+      );
+      if (claimMunicipality) claimMunicipality.textContent = `Municipio: ${configuration.municipality.name}`;
+      claimMessage.textContent = '';
+      configurationReady = true;
+      claimCategory.disabled = false;
+      if (submitButton) submitButton.disabled = false;
+    } catch (error) {
+      claimCategory.replaceChildren(new Option('No disponible', ''));
+      claimMessage.textContent = error instanceof Error && error.name !== 'TimeoutError'
+        ? error.message : 'No pudimos cargar la configuracion municipal.';
+      claimConfigRetry.hidden = false;
+    }
+  }
+
+  claimConfigRetry.addEventListener('click', loadClaimConfiguration);
+  loadClaimConfiguration();
+
   publicClaimForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (!configurationReady || submitting) return;
     claimMessage.textContent = 'Validando la direccion y registrando el reclamo...';
     claimResult.hidden = true;
 
@@ -60,6 +111,8 @@ if (publicClaimForm instanceof HTMLFormElement && claimMessage && claimResult) {
       return;
     }
 
+    submitting = true;
+    if (submitButton) submitButton.disabled = true;
     try {
       const response = await fetch(`${siteConfig.gatewayUrl}/api/reclamos/public`, {
         method: 'POST',
@@ -86,6 +139,9 @@ if (publicClaimForm instanceof HTMLFormElement && claimMessage && claimResult) {
       claimMessage.textContent = error instanceof Error
         ? error.message
         : 'No se pudo registrar el reclamo.';
+    } finally {
+      submitting = false;
+      if (submitButton) submitButton.disabled = !configurationReady;
     }
   });
 }
